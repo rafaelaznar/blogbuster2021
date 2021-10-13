@@ -129,7 +129,10 @@ public class Control extends HttpServlet {
                 } else {
                     throw new Exception("Error al obtener la versión de la base de datos");
                 }
-                oConnection.close();
+                /*  Quan al try li passen paràmetres, aquest els tanca automàticament
+                    Font => https://stackoverflow.com/questions/42998026/java-try-with-resources-on-parameters
+                    oConnection.close();
+                 */
             } catch (Exception ex) {
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 out.print(oGson.toJson(ex.getMessage()));                
