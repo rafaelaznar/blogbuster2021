@@ -1,0 +1,9 @@
+API
+
+CRUD
+
+CREATE: Método: POST URL: http://localhost:8081/blogbuster/control + parametros en json (sin id)
+READ: Método: GET URL: http://localhost:8081/blogbuster/control?id=34 -> devuelve el post 34
+READ: Método: GET URL: http://localhost:8081/blogbuster/control?page=3&rpp=10 -> devuelve la página 3 a 10 registros x página
+UPDATE: Método: PUT URL: http://localhost:8081/blogbuster/control + parametros en json (con id)
+DELETE: Método: DELETE URL: http://localhost:8081/blogbuster/control?id=23 -> borra el post con id 23
