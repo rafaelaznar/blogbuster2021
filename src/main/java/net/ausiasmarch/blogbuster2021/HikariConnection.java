@@ -5,16 +5,15 @@ import java.sql.SQLException;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
-
-public class HikariConnection  {
+public class HikariConnection {
 
     private HikariDataSource oPool;
 
     public HikariConnection(
-            String connectionChain, 
-            String login, 
-            String password, 
-            Integer databaseMinPoolSize, 
+            String connectionChain,
+            String login,
+            String password,
+            Integer databaseMinPoolSize,
             Integer databaseMaxPoolSize) {
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(connectionChain);
@@ -33,12 +32,10 @@ public class HikariConnection  {
         oPool = new HikariDataSource(config);
     }
 
-    
     public Connection newConnection() throws SQLException {
         return oPool.getConnection();
     }
 
-    
     public void closePool() throws SQLException {
         if (oPool != null) {
             oPool.close();
