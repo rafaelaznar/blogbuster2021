@@ -44,7 +44,8 @@ public class Control extends HttpServlet {
     }
 
     @Override
-    public void init(ServletConfig config) throws ServletException {
+    public void init() throws ServletException {
+        // https://stackoverflow.com/questions/13638978/java-servlets-overriding-initservletconfig-config
         try {           
             loadResourceProperties();
             Class.forName("com.mysql.jdbc.Driver");
@@ -55,10 +56,10 @@ public class Control extends HttpServlet {
                     Integer.parseInt(properties.getProperty("databaseMinPoolSize")),
                     Integer.parseInt(properties.getProperty("databaseMaxPoolSize"))
             );
-            super.init(config);
+            
         } catch (ClassNotFoundException | IOException ex) {
             System.out.print("ERROR");
-        }
+        } 
     }
 
     private void doCORS(HttpServletRequest oRequest, HttpServletResponse oResponse) {
