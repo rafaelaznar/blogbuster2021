@@ -226,9 +226,17 @@ public class Control extends HttpServlet {
                         break;
                     case "post":
                          switch (op) {
-                            case "getone":
-                                response.setStatus(HttpServletResponse.SC_OK);
-                                out.print(oGson.toJson("post.getone"));                                
+                            case "getone":  
+                                Integer id = Integer.parseInt(request.getParameter("id"));
+                                try ( Connection oConnection = oConnectionPool.newConnection()) {
+                                    PostDAO oPostDao = new PostDAO(oConnection);
+                                    PostBean oPostBean = oPostDao.getOne(id);
+                                    response.setStatus(HttpServletResponse.SC_OK);
+                                    out.print(oGson.toJson(oPostBean));    
+                                } catch (Exception ex) {
+                                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                                    out.print(oGson.toJson(ex.getMessage()));
+                                }
                                 break;
                             case "getpage":
                                 response.setStatus(HttpServletResponse.SC_OK);
