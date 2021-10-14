@@ -46,7 +46,7 @@ public class Control extends HttpServlet {
     @Override
     public void init() throws ServletException {
         // https://stackoverflow.com/questions/13638978/java-servlets-overriding-initservletconfig-config
-        try {           
+        try {
             loadResourceProperties();
             Class.forName("com.mysql.jdbc.Driver");
             oConnectionPool = new HikariConnection(
@@ -56,10 +56,10 @@ public class Control extends HttpServlet {
                     Integer.parseInt(properties.getProperty("databaseMinPoolSize")),
                     Integer.parseInt(properties.getProperty("databaseMaxPoolSize"))
             );
-            
+
         } catch (ClassNotFoundException | IOException ex) {
             System.out.print("ERROR");
-        } 
+        }
     }
 
     private void doCORS(HttpServletRequest oRequest, HttpServletResponse oResponse) {
@@ -152,78 +152,90 @@ public class Control extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        System.out.println("goGET Request: " + request.getRequestURI());
+            throws ServletException, IOException {        
         doCORS(request, response);
+        String ob = request.getParameter("ob");
+        String op = request.getParameter("op");
         Gson oGson = new Gson();
         try ( PrintWriter out = response.getWriter()) {
-            String op = request.getParameter("op");
-            if (op != null) {
+            if (("".equalsIgnoreCase(ob) && "".equalsIgnoreCase(op)) || (ob == null && op == null)) {
+                response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+                out.print(oGson.toJson("Method Not Allowed"));
+            } else {
                 HttpSession oSession = request.getSession();
                 UserBean oUserBean1 = null;
                 String name = null;
-                switch (op) {
-                    case "check":
-                        response.setStatus(HttpServletResponse.SC_OK);
-
-//                        UserBean oUserBean = (UserBean) oSession.getAttribute("usuario");
-//                        String login1=oUserBean.getLogin();
-//                        out.print(oGson.toJson(login1));
-                        out.print(oGson.toJson((String) ((UserBean) oSession.getAttribute("usuario")).getLogin()));
-                        break;
-                    case "get":
-                        oUserBean1 = (UserBean) oSession.getAttribute("usuario");
-                        name = null;
-                        if (oUserBean1 != null) {
-                            name = oUserBean1.getLogin();
-                        }
-//                        NullPointerException is a run-time exception which is not recommended to catch it, but instead avoid it:
-//                        https://stackoverflow.com/questions/15146339/catching-nullpointerexception-in-java  
-//                        String name;
-//                        try {
-//                            name = ((UserBean) oSession.getAttribute("usuario")).getLogin();
-//                        } catch (Exception ex) {
-//                            name = null;
-//                        }
-                        if (name != null) {
-                            if (name.equalsIgnoreCase("admin")) {
+                switch (ob) {
+                    case "session":
+                        switch (op) {
+                            case "check":
                                 response.setStatus(HttpServletResponse.SC_OK);
-                                out.print(oGson.toJson("QWERTY"));
-                            } else {
-                                response.setStatus(HttpServletResponse.SC_OK);
-                                out.print(oGson.toJson("ASDFG"));
-                            }
-                        } else {
-                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                            out.print(oGson.toJson("Unauthorized"));
-                        }
-                        break;
-
-                    case "connect":
-                        oUserBean1 = (UserBean) oSession.getAttribute("usuario");
-                        name = null;
-                        if (oUserBean1 != null) {
-                            name = oUserBean1.getLogin();
-                            if (name != null) {
-                                if (name.equalsIgnoreCase("admin")) {
-                                    String dbversion = null;
-                                    try ( Connection oConnection = oConnectionPool.newConnection()) {
-                                        Statement stmt = oConnection.createStatement();
-                                        ResultSet rs = stmt.executeQuery("SELECT version()");
-                                        if (rs.next()) {
-                                            dbversion = "Database Version : " + rs.getString(1);
-                                        } else {
-                                            throw new Exception("Error al obtener la versión de la base de datos");
-                                        }
-                                        //oConnection.close(); -> ver Mark
-                                    } catch (Exception ex) {
-                                        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                                        out.print(oGson.toJson(ex.getMessage()));
-                                    }
-                                    response.setStatus(HttpServletResponse.SC_OK);
-                                    out.print(oGson.toJson(dbversion));
+                                out.print(oGson.toJson((String) ((UserBean) oSession.getAttribute("usuario")).getLogin()));
+                                break;
+                            case "get":
+                                oUserBean1 = (UserBean) oSession.getAttribute("usuario");
+                                name = null;
+                                if (oUserBean1 != null) {
+                                    name = oUserBean1.getLogin();
                                 }
-                            }
+                                if (name != null) {
+                                    if (name.equalsIgnoreCase("admin")) {
+                                        response.setStatus(HttpServletResponse.SC_OK);
+                                        out.print(oGson.toJson("QWERTY"));
+                                    } else {
+                                        response.setStatus(HttpServletResponse.SC_OK);
+                                        out.print(oGson.toJson("ASDFG"));
+                                    }
+                                } else {
+                                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                    out.print(oGson.toJson("Unauthorized"));
+                                }
+                                break;
+                            case "connect":
+                                oUserBean1 = (UserBean) oSession.getAttribute("usuario");
+                                name = null;
+                                if (oUserBean1 != null) {
+                                    name = oUserBean1.getLogin();
+                                    if (name != null) {
+                                        if (name.equalsIgnoreCase("admin")) {
+                                            String dbversion = null;
+                                            try ( Connection oConnection = oConnectionPool.newConnection()) {
+                                                Statement stmt = oConnection.createStatement();
+                                                ResultSet rs = stmt.executeQuery("SELECT version()");
+                                                if (rs.next()) {
+                                                    dbversion = "Database Version : " + rs.getString(1);
+                                                } else {
+                                                    throw new Exception("Error al obtener la versión de la base de datos");
+                                                }
+                                                //oConnection.close(); -> ver Mark
+                                            } catch (Exception ex) {
+                                                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                                                out.print(oGson.toJson(ex.getMessage()));
+                                            }
+                                            response.setStatus(HttpServletResponse.SC_OK);
+                                            out.print(oGson.toJson(dbversion));
+                                        }
+                                    }
+                                }
+                                break;
+                            default:
+                                response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+                                out.print(oGson.toJson("Method Not Allowed"));
+                                break;
+                        }
+                        break;
+                    case "post":
+                         switch (op) {
+                            case "getone":
+                                response.setStatus(HttpServletResponse.SC_OK);
+                                out.print(oGson.toJson("post.getone"));                                
+                                break;
+                            case "getpage":
+                                response.setStatus(HttpServletResponse.SC_OK);
+                                out.print(oGson.toJson("post.getpage"));                                                                
+                                break;
+                            default:
+                                break;
                         }
                         break;
                     default:
@@ -231,9 +243,7 @@ public class Control extends HttpServlet {
                         out.print(oGson.toJson("Method Not Allowed"));
                         break;
                 }
-            } else {
-                response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
-                out.print(oGson.toJson("Method Not Allowed"));
+
             }
         }
     }
@@ -242,32 +252,65 @@ public class Control extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         doCORS(request, response);
+        String ob = request.getParameter("ob");
+        String op = request.getParameter("op");
         Gson oGson = new Gson();
         try ( PrintWriter out = response.getWriter()) {
-            HttpSession oSession = request.getSession();
-
-            String payloadRequest = getBody(request);
-            UserBean oUserBean = new UserBean();
-            oUserBean = oGson.fromJson(payloadRequest, oUserBean.getClass());
-
-            if (oUserBean.getLogin() != null && oUserBean.getPassword() != null) {
-                if (oUserBean.getLogin().equalsIgnoreCase("admin") && oUserBean.getPassword().equalsIgnoreCase("8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918")) { //admin
-                    oSession.setAttribute("usuario", oUserBean);
-                    response.setStatus(HttpServletResponse.SC_OK);
-                    out.print(oGson.toJson("Welcome"));
-                } else {
-                    if (oUserBean.getLogin().equalsIgnoreCase("user") && oUserBean.getPassword().equalsIgnoreCase("04f8996da763b7a969b1028ee3007569eaf3a635486ddab211d512c85b9df8fb")) { //user
-                        oSession.setAttribute("usuario", oUserBean);
-                        response.setStatus(HttpServletResponse.SC_OK);
-                        out.print(oGson.toJson("Welcome"));
-                    } else {
-                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                        out.print(oGson.toJson("Auth Error"));
-                    }
-                }
+            if (("".equalsIgnoreCase(ob) && "".equalsIgnoreCase(op)) || (ob == null && op == null)) {
+                response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+                out.print(oGson.toJson("Method Not Allowed"));
             } else {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                out.print(oGson.toJson("Auth Error"));
+                switch (ob) {
+                    case "session":
+                        switch (op) {
+                            case "login":                                
+                                HttpSession oSession = request.getSession();
+                                String payloadRequest = getBody(request);
+                                UserBean oUserBean = new UserBean();
+                                oUserBean = oGson.fromJson(payloadRequest, oUserBean.getClass());
+
+                                if (oUserBean.getLogin() != null && oUserBean.getPassword() != null) {
+                                    if (oUserBean.getLogin().equalsIgnoreCase("admin") && oUserBean.getPassword().equalsIgnoreCase("8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918")) { //admin
+                                        oSession.setAttribute("usuario", oUserBean);
+                                        response.setStatus(HttpServletResponse.SC_OK);
+                                        out.print(oGson.toJson("Welcome"));
+                                    } else {
+                                        if (oUserBean.getLogin().equalsIgnoreCase("user") && oUserBean.getPassword().equalsIgnoreCase("04f8996da763b7a969b1028ee3007569eaf3a635486ddab211d512c85b9df8fb")) { //user
+                                            oSession.setAttribute("usuario", oUserBean);
+                                            response.setStatus(HttpServletResponse.SC_OK);
+                                            out.print(oGson.toJson("Welcome"));
+                                        } else {
+                                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                            out.print(oGson.toJson("Auth Error"));
+                                        }
+                                    }
+                                } else {
+                                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                    out.print(oGson.toJson("Auth Error"));
+                                }
+                                break;
+                            default:
+                                response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+                                out.print(oGson.toJson("Method Not Allowed"));
+                                break;
+                        }
+                    case "post":
+                        switch (op) {
+                            case "create":
+                                response.setStatus(HttpServletResponse.SC_OK);
+                                out.print(oGson.toJson("post.create"));
+                                break;  
+                            default:
+                                response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+                                out.print(oGson.toJson("Method Not Allowed"));
+                                break;
+                        }
+                        break;
+                    default: 
+                        response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+                        out.print(oGson.toJson("Method Not Allowed"));
+                        break;                          
+                }
             }
         }
     }
@@ -276,15 +319,81 @@ public class Control extends HttpServlet {
     protected void doDelete(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         doCORS(request, response);
+        String ob = request.getParameter("ob");
+        String op = request.getParameter("op");
         Gson oGson = new Gson();
         try ( PrintWriter out = response.getWriter()) {
-            HttpSession oSession = request.getSession();
-            oSession.invalidate();
-            response.setStatus(HttpServletResponse.SC_OK);
-            out.print(oGson.toJson("Session closed"));
+            if (("".equalsIgnoreCase(ob) && "".equalsIgnoreCase(op)) || (ob == null && op == null)) {
+                response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+                out.print(oGson.toJson("Method Not Allowed"));
+            } else {
+                switch (ob) {
+                    case "session":
+                        switch (op) {
+                            case "logout": 
+                                HttpSession oSession = request.getSession();
+                                oSession.invalidate();
+                                response.setStatus(HttpServletResponse.SC_OK);
+                                out.print(oGson.toJson("Session closed"));
+                            break;
+                            default:
+                                response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+                                out.print(oGson.toJson("Method Not Allowed"));
+                                break;   
+                        }
+                    case "post":
+                        switch (op) {
+                            case "delete":
+                                response.setStatus(HttpServletResponse.SC_OK);
+                                out.print(oGson.toJson("post.delete"));
+                                break;                                
+                            default:
+                                response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+                                out.print(oGson.toJson("Method Not Allowed"));
+                                break;
+                        }
+                        break;
+                    default: 
+                        response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+                        out.print(oGson.toJson("Method Not Allowed"));
+                        break;                          
+                }
+            }
         }
     }
 
+    @Override
+    protected void doPut(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        doCORS(request, response);
+        String ob = request.getParameter("ob");
+        String op = request.getParameter("op");
+        Gson oGson = new Gson();
+        try ( PrintWriter out = response.getWriter()) {
+            if (("".equalsIgnoreCase(ob) && "".equalsIgnoreCase(op)) || (ob == null && op == null)) {
+                response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+                out.print(oGson.toJson("Method Not Allowed"));
+            } else {
+                switch (ob) {
+                    case "post":
+                        switch (op) {
+                            case "create":
+                                break;
+                            default:
+                                response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+                                out.print(oGson.toJson("Method Not Allowed"));
+                                break;
+                        }
+                        break;
+                    default: 
+                        response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+                        out.print(oGson.toJson("Method Not Allowed"));
+                        break;                          
+                }
+            }
+        }
+    }    
+            
     @Override
     public void destroy() {
         try {
