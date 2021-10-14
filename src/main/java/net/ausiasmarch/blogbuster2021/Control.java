@@ -352,8 +352,35 @@ public class Control extends HttpServlet {
                     case "post":
                         switch (op) {
                             case "delete":
-                                response.setStatus(HttpServletResponse.SC_OK);
-                                out.print(oGson.toJson("post.delete"));
+                                HttpSession oSession = request.getSession();
+                                UserBean oUserBean = (UserBean) oSession.getAttribute("usuario");
+                                String name = null;
+                                if (oUserBean != null) {
+                                    name = oUserBean.getLogin();
+                                    if (name != null) {
+                                        if (name.equalsIgnoreCase("admin")) {                                                               
+                                            Integer id = Integer.parseInt(request.getParameter("id"));
+                                            try ( Connection oConnection = oConnectionPool.newConnection()) {
+                                                PostDAO oPostDao = new PostDAO(oConnection);
+                                                PostBean oPostBean = oPostDao.getOne(id);
+                                                response.setStatus(HttpServletResponse.SC_OK);
+                                                out.print(oGson.toJson(oPostBean));    
+                                            } catch (Exception ex) {
+                                                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                                                out.print(oGson.toJson(ex.getMessage()));
+                                            }                                 
+                                        } else {
+                                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                            out.print(oGson.toJson("Unauthorized"));
+                                        }
+                                    } else {
+                                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                        out.print(oGson.toJson("Unauthorized"));                                        
+                                    }
+                                } else {
+                                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                    out.print(oGson.toJson("Unauthorized"));
+                                }
                                 break;                                
                             default:
                                 response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);

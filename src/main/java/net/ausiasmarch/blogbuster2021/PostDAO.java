@@ -25,7 +25,7 @@ public class PostDAO {
         PreparedStatement oPreparedStatement = oConnection.prepareStatement(srtSQL);
         oPreparedStatement.setInt(1, id);
         ResultSet oResultSet = oPreparedStatement.executeQuery();
-        PostBean oPostBean =null;
+        PostBean oPostBean = null;
         if (oResultSet.next()) {
             oPostBean = new PostBean();
             oPostBean.setId(id);
@@ -33,9 +33,20 @@ public class PostDAO {
             oPostBean.setCuerpo(oResultSet.getString("cuerpo"));
             oPostBean.setFecha(convertToLocalDateViaInstant(oResultSet.getDate("fecha")));
             oPostBean.setEtiquetas(oResultSet.getString("etiquetas"));
-            oPostBean.setVisible(oResultSet.getBoolean("visible"));            
-        } 
-        return oPostBean;        
+            oPostBean.setVisible(oResultSet.getBoolean("visible"));
+        }
+        oResultSet.close();
+        oPreparedStatement.close();
+        return oPostBean;
+    }
+
+    public Integer delete(int id) throws SQLException {
+        String srtSQL = "DELETE FROM post WHERE id=?";
+        PreparedStatement oPreparedStatement = oConnection.prepareStatement(srtSQL);
+        oPreparedStatement.setInt(1, id);
+        int result = oPreparedStatement.executeUpdate();
+        oPreparedStatement.close();
+        return result;
     }
 
 }
