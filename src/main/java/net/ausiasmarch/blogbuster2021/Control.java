@@ -83,7 +83,7 @@ public class Control extends HttpServlet {
         }
     }
 
-    private static String getConnectionChain(String databaseHost, String databasePort, String databaseName) {
+    private String getConnectionChain(String databaseHost, String databasePort, String databaseName) {
         return "jdbc:mysql://" + databaseHost + ":" + databasePort + "/"
                 + databaseName + "?autoReconnect=true&useSSL=false";
     }
