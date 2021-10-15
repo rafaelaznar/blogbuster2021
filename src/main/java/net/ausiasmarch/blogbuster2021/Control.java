@@ -1,16 +1,26 @@
 package net.ausiasmarch.blogbuster2021;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Properties;
 import java.util.Random;
 import javax.servlet.ServletConfig;
@@ -19,6 +29,12 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
+    class LocalDateAdapter implements JsonSerializer<LocalDate> {
+    public JsonElement serialize(LocalDate date, Type typeOfSrc, JsonSerializationContext context) {
+        return new JsonPrimitive(date.format(DateTimeFormatter.ISO_LOCAL_DATE)); // "yyyy-mm-dd"
+    }
+}
 
 public class Control extends HttpServlet {
 
@@ -255,6 +271,8 @@ public class Control extends HttpServlet {
             }
         }
     }
+    
+
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -262,7 +280,22 @@ public class Control extends HttpServlet {
         doCORS(request, response);
         String ob = request.getParameter("ob");
         String op = request.getParameter("op");
-        Gson oGson = new Gson();
+        
+        // https://stackoverflow.com/questions/6873020/gson-date-format
+        //Gson oGson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+               
+//        // https://stackoverflow.com/questions/39192945/serialize-java-8-localdate-as-yyyy-mm-dd-with-gson
+//        Gson oGson = new GsonBuilder()
+//        .setPrettyPrinting()
+//        .registerTypeAdapter(LocalDate.class, new LocalDateAdapter())
+//        .create();
+        
+        
+        GsonBuilder oGsonBuilder = new GsonBuilder();
+        //oGsonBuilder.setDateFormat("dd/MM/yyyy HH:mm");
+        Gson oGson = oGsonBuilder.create();
+        
+        HttpSession oSession = request.getSession();
         try ( PrintWriter out = response.getWriter()) {
             if (("".equalsIgnoreCase(ob) && "".equalsIgnoreCase(op)) || (ob == null && op == null)) {
                 response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
@@ -271,10 +304,10 @@ public class Control extends HttpServlet {
                 switch (ob) {
                     case "session":
                         switch (op) {
-                            case "login":                                
-                                HttpSession oSession = request.getSession();
+                            case "login":                                                               
                                 String payloadRequest = getBody(request);
                                 UserBean oUserBean = new UserBean();
+                                
                                 oUserBean = oGson.fromJson(payloadRequest, oUserBean.getClass());
 
                                 if (oUserBean.getLogin() != null && oUserBean.getPassword() != null) {
@@ -302,11 +335,36 @@ public class Control extends HttpServlet {
                                 out.print(oGson.toJson("Method Not Allowed"));
                                 break;
                         }
+                        break;
                     case "post":
                         switch (op) {
-                            case "create":
-                                response.setStatus(HttpServletResponse.SC_OK);
-                                out.print(oGson.toJson("post.create"));
+                            case "create":                                 
+                                UserBean oUserBean = (UserBean) oSession.getAttribute("usuario");
+                                String name = null;
+                                if (oUserBean != null) {
+                                    name = oUserBean.getLogin();
+                                    if (name != null) {
+                                        if (name.equalsIgnoreCase("admin")) {                                                                                       
+                                            String payloadRequest = getBody(request);
+                                            PostBean oPostBean = new PostBean();
+                                            try{
+                                                oPostBean = oGson.fromJson(payloadRequest, oPostBean.getClass());                                                                
+                                            } catch (Exception ex){
+                                                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                                                out.print(oGson.toJson(ex.getMessage()));
+                                            }
+                                            try ( Connection oConnection = oConnectionPool.newConnection()) {
+                                                PostDAO oPostDao = new PostDAO(oConnection);
+                                                int iResult = oPostDao.create(oPostBean);
+                                                response.setStatus(HttpServletResponse.SC_OK);
+                                                out.print(oGson.toJson(iResult));    
+                                            } catch (Exception ex) {
+                                                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                                                out.print(oGson.toJson(ex.getMessage()));
+                                            }                                   
+                                        }
+                                    }
+                                }
                                 break;  
                             default:
                                 response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
@@ -349,6 +407,7 @@ public class Control extends HttpServlet {
                                 out.print(oGson.toJson("Method Not Allowed"));
                                 break;   
                         }
+                        break;
                     case "post":
                         switch (op) {
                             case "delete":
@@ -412,7 +471,7 @@ public class Control extends HttpServlet {
                 switch (ob) {
                     case "post":
                         switch (op) {
-                            case "create":
+                            case "update":
                                 break;
                             default:
                                 response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);

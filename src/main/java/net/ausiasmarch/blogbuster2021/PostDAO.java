@@ -20,6 +20,10 @@ public class PostDAO {
         return dateToConvert.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
     }
 
+    private Date convertToDateViaInstant(LocalDateTime dateToConvert) {
+        return java.util.Date.from(dateToConvert.atZone(ZoneId.systemDefault()).toInstant());
+    }
+
     public PostBean getOne(int id) throws SQLException {
         String srtSQL = "SELECT * FROM post WHERE id=?";
         PreparedStatement oPreparedStatement = oConnection.prepareStatement(srtSQL);
@@ -40,13 +44,26 @@ public class PostDAO {
         return oPostBean;
     }
 
-    public Integer delete(int id) throws SQLException {
+    public int delete(int id) throws SQLException {
         String srtSQL = "DELETE FROM post WHERE id=?";
         PreparedStatement oPreparedStatement = oConnection.prepareStatement(srtSQL);
         oPreparedStatement.setInt(1, id);
         int result = oPreparedStatement.executeUpdate();
         oPreparedStatement.close();
         return result;
+    }
+
+    public int create(PostBean oPostBean) throws SQLException {
+        String srtSQL = "INSERT INTO post (titulo,cuerpo,fecha,etiquetas,visible) VALUES (?,?,?,?,?)";
+        PreparedStatement oPreparedStatement = oConnection.prepareStatement(srtSQL, PreparedStatement.RETURN_GENERATED_KEYS);
+        oPreparedStatement.setString(1, oPostBean.getTitulo());
+        oPreparedStatement.setString(2, oPostBean.getCuerpo());
+        oPreparedStatement.setDate(3, (java.sql.Date) convertToDateViaInstant(oPostBean.getFecha()));
+        oPreparedStatement.setString(4, oPostBean.getEtiquetas());
+        oPreparedStatement.setBoolean(5, oPostBean.getVisible());
+        int iResult = oPreparedStatement.executeUpdate();
+        oPreparedStatement.close();
+        return iResult;
     }
 
 }

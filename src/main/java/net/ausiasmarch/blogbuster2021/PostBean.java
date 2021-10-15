@@ -1,6 +1,7 @@
 package net.ausiasmarch.blogbuster2021;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 public class PostBean {
 
