@@ -2,8 +2,10 @@ package net.ausiasmarch.blogbuster2021;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
@@ -20,6 +22,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Properties;
 import java.util.Random;
@@ -168,7 +171,7 @@ public class Control extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {        
+            throws ServletException, IOException {
         doCORS(request, response);
         String ob = request.getParameter("ob");
         String op = request.getParameter("op");
@@ -185,8 +188,20 @@ public class Control extends HttpServlet {
                     case "session":
                         switch (op) {
                             case "check":
-                                response.setStatus(HttpServletResponse.SC_OK);
-                                out.print(oGson.toJson((String) ((UserBean) oSession.getAttribute("usuario")).getLogin()));
+                                oUserBean1 = (UserBean) oSession.getAttribute("usuario");
+                                if (oUserBean1 != null) {
+                                    name = oUserBean1.getLogin();
+                                    if (name != null) {
+                                        response.setStatus(HttpServletResponse.SC_OK);
+                                        out.print(oGson.toJson(name));
+                                    } else {
+                                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                        out.print(oGson.toJson("Unauthorized")); 
+                                    }                                    
+                                } else {
+                                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                    out.print(oGson.toJson("Unauthorized"));
+                                }
                                 break;
                             case "get":
                                 oUserBean1 = (UserBean) oSession.getAttribute("usuario");
@@ -242,13 +257,13 @@ public class Control extends HttpServlet {
                         break;
                     case "post":
                          switch (op) {
-                            case "getone":  
+                            case "getone":
                                 Integer id = Integer.parseInt(request.getParameter("id"));
                                 try ( Connection oConnection = oConnectionPool.newConnection()) {
                                     PostDAO oPostDao = new PostDAO(oConnection);
                                     PostBean oPostBean = oPostDao.getOne(id);
                                     response.setStatus(HttpServletResponse.SC_OK);
-                                    out.print(oGson.toJson(oPostBean));    
+                                    out.print(oGson.toJson(oPostBean));
                                 } catch (Exception ex) {
                                     response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                                     out.print(oGson.toJson(ex.getMessage()));
@@ -256,7 +271,7 @@ public class Control extends HttpServlet {
                                 break;
                             case "getpage":
                                 response.setStatus(HttpServletResponse.SC_OK);
-                                out.print(oGson.toJson("post.getpage"));                                                                
+                                out.print(oGson.toJson("post.getpage"));
                                 break;
                             default:
                                 break;
@@ -271,7 +286,7 @@ public class Control extends HttpServlet {
             }
         }
     }
-    
+
 
 
     @Override
@@ -280,21 +295,15 @@ public class Control extends HttpServlet {
         doCORS(request, response);
         String ob = request.getParameter("ob");
         String op = request.getParameter("op");
-        
-        // https://stackoverflow.com/questions/6873020/gson-date-format
-        //Gson oGson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-               
-//        // https://stackoverflow.com/questions/39192945/serialize-java-8-localdate-as-yyyy-mm-dd-with-gson
-//        Gson oGson = new GsonBuilder()
-//        .setPrettyPrinting()
-//        .registerTypeAdapter(LocalDate.class, new LocalDateAdapter())
-//        .create();
-        
-        
-        GsonBuilder oGsonBuilder = new GsonBuilder();
-        //oGsonBuilder.setDateFormat("dd/MM/yyyy HH:mm");
-        Gson oGson = oGsonBuilder.create();
-        
+
+        //https://stackoverflow.com/questions/22310143/java-8-localdatetime-deserialized-using-gson
+        Gson oGson = new GsonBuilder().registerTypeAdapter(LocalDateTime.class, new JsonDeserializer<LocalDateTime>() { 
+            @Override 
+            public LocalDateTime deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException { 
+                return LocalDateTime.parse(json.getAsString(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")); 
+            } 
+        }).create();
+
         HttpSession oSession = request.getSession();
         try ( PrintWriter out = response.getWriter()) {
             if (("".equalsIgnoreCase(ob) && "".equalsIgnoreCase(op)) || (ob == null && op == null)) {
@@ -304,10 +313,10 @@ public class Control extends HttpServlet {
                 switch (ob) {
                     case "session":
                         switch (op) {
-                            case "login":                                                               
+                            case "login":
                                 String payloadRequest = getBody(request);
                                 UserBean oUserBean = new UserBean();
-                                
+
                                 oUserBean = oGson.fromJson(payloadRequest, oUserBean.getClass());
 
                                 if (oUserBean.getLogin() != null && oUserBean.getPassword() != null) {
@@ -338,44 +347,50 @@ public class Control extends HttpServlet {
                         break;
                     case "post":
                         switch (op) {
-                            case "create":                                 
+                            case "create":
                                 UserBean oUserBean = (UserBean) oSession.getAttribute("usuario");
                                 String name = null;
                                 if (oUserBean != null) {
                                     name = oUserBean.getLogin();
                                     if (name != null) {
-                                        if (name.equalsIgnoreCase("admin")) {                                                                                       
+                                        if (name.equalsIgnoreCase("admin")) {
                                             String payloadRequest = getBody(request);
                                             PostBean oPostBean = new PostBean();
-                                            try{
-                                                oPostBean = oGson.fromJson(payloadRequest, oPostBean.getClass());                                                                
+                                            try {
+                                                oPostBean = oGson.fromJson(payloadRequest, oPostBean.getClass());
+                                                try (Connection oConnection = oConnectionPool.newConnection()) {
+                                                    PostDAO oPostDao = new PostDAO(oConnection);
+                                                    int iResult = oPostDao.create(oPostBean);
+                                                    response.setStatus(HttpServletResponse.SC_OK);
+                                                    out.print(oGson.toJson(iResult));
+                                                } catch (Exception ex) {
+                                                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                                                    out.print(oGson.toJson(ex.getMessage()));
+                                                }
                                             } catch (Exception ex){
                                                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                                                 out.print(oGson.toJson(ex.getMessage()));
-                                            }
-                                            try ( Connection oConnection = oConnectionPool.newConnection()) {
-                                                PostDAO oPostDao = new PostDAO(oConnection);
-                                                int iResult = oPostDao.create(oPostBean);
-                                                response.setStatus(HttpServletResponse.SC_OK);
-                                                out.print(oGson.toJson(iResult));    
-                                            } catch (Exception ex) {
-                                                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                                                out.print(oGson.toJson(ex.getMessage()));
-                                            }                                   
+                                            }                                           
                                         }
+                                    } else {
+                                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                        out.print(oGson.toJson("Unauthorized"));
                                     }
+                                } else {
+                                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                    out.print(oGson.toJson("Unauthorized"));
                                 }
-                                break;  
+                                break;
                             default:
                                 response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
                                 out.print(oGson.toJson("Method Not Allowed"));
                                 break;
                         }
                         break;
-                    default: 
+                    default:
                         response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
                         out.print(oGson.toJson("Method Not Allowed"));
-                        break;                          
+                        break;
                 }
             }
         }
@@ -396,7 +411,7 @@ public class Control extends HttpServlet {
                 switch (ob) {
                     case "session":
                         switch (op) {
-                            case "logout": 
+                            case "logout":
                                 HttpSession oSession = request.getSession();
                                 oSession.invalidate();
                                 response.setStatus(HttpServletResponse.SC_OK);
@@ -405,7 +420,7 @@ public class Control extends HttpServlet {
                             default:
                                 response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
                                 out.print(oGson.toJson("Method Not Allowed"));
-                                break;   
+                                break;
                         }
                         break;
                     case "post":
@@ -417,40 +432,40 @@ public class Control extends HttpServlet {
                                 if (oUserBean != null) {
                                     name = oUserBean.getLogin();
                                     if (name != null) {
-                                        if (name.equalsIgnoreCase("admin")) {                                                               
+                                        if (name.equalsIgnoreCase("admin")) {
                                             Integer id = Integer.parseInt(request.getParameter("id"));
                                             try ( Connection oConnection = oConnectionPool.newConnection()) {
                                                 PostDAO oPostDao = new PostDAO(oConnection);
                                                 PostBean oPostBean = oPostDao.getOne(id);
                                                 response.setStatus(HttpServletResponse.SC_OK);
-                                                out.print(oGson.toJson(oPostBean));    
+                                                out.print(oGson.toJson(oPostBean));
                                             } catch (Exception ex) {
                                                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                                                 out.print(oGson.toJson(ex.getMessage()));
-                                            }                                 
+                                            }
                                         } else {
                                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                                             out.print(oGson.toJson("Unauthorized"));
                                         }
                                     } else {
                                         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                                        out.print(oGson.toJson("Unauthorized"));                                        
+                                        out.print(oGson.toJson("Unauthorized"));
                                     }
                                 } else {
                                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                                     out.print(oGson.toJson("Unauthorized"));
                                 }
-                                break;                                
+                                break;
                             default:
                                 response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
                                 out.print(oGson.toJson("Method Not Allowed"));
                                 break;
                         }
                         break;
-                    default: 
+                    default:
                         response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
                         out.print(oGson.toJson("Method Not Allowed"));
-                        break;                          
+                        break;
                 }
             }
         }
@@ -479,15 +494,15 @@ public class Control extends HttpServlet {
                                 break;
                         }
                         break;
-                    default: 
+                    default:
                         response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
                         out.print(oGson.toJson("Method Not Allowed"));
-                        break;                          
+                        break;
                 }
             }
         }
-    }    
-            
+    }
+
     @Override
     public void destroy() {
         try {

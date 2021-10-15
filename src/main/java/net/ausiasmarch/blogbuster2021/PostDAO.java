@@ -58,7 +58,9 @@ public class PostDAO {
         PreparedStatement oPreparedStatement = oConnection.prepareStatement(srtSQL, PreparedStatement.RETURN_GENERATED_KEYS);
         oPreparedStatement.setString(1, oPostBean.getTitulo());
         oPreparedStatement.setString(2, oPostBean.getCuerpo());
-        oPreparedStatement.setDate(3, (java.sql.Date) convertToDateViaInstant(oPostBean.getFecha()));
+        //https://stackoverflow.com/questions/18614836/using-setdate-in-preparedstatement
+        //   "fecha": "2021-01-01 12:23",
+        oPreparedStatement.setTimestamp(3, java.sql.Timestamp.valueOf(oPostBean.getFecha()));
         oPreparedStatement.setString(4, oPostBean.getEtiquetas());
         oPreparedStatement.setBoolean(5, oPostBean.getVisible());
         int iResult = oPreparedStatement.executeUpdate();
