@@ -15,7 +15,7 @@ public class HikariPool {
         oProperties = Helper.loadResourceProperties();
     }
 
-    public HikariConnection getDatasource() {
+    public HikariConnection getHikariPool() {
         if (oHikariConnection == null) {
             System.out.print("Abriendo pool");
             oHikariConnection = new HikariConnection(
