@@ -1,7 +1,6 @@
 package net.ausiasmarch.blogbuster2021.Connection;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.Properties;
 import net.ausiasmarch.blogbuster2021.Helper.Helper;
 

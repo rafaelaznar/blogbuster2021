@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import net.ausiasmarch.blogbuster2021.Helper.Helper;
 
 public class PostDAO {
 
@@ -15,14 +16,6 @@ public class PostDAO {
 
     public PostDAO(Connection oConnection) {
         this.oConnection = oConnection;
-    }
-
-    private LocalDateTime convertToLocalDateViaInstant(Date dateToConvert) {
-        return dateToConvert.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-    }
-
-    private Date convertToDateViaInstant(LocalDateTime dateToConvert) {
-        return java.util.Date.from(dateToConvert.atZone(ZoneId.systemDefault()).toInstant());
     }
 
     public PostBean getOne(int id) throws SQLException {
@@ -36,7 +29,7 @@ public class PostDAO {
             oPostBean.setId(id);
             oPostBean.setTitulo(oResultSet.getString("titulo"));
             oPostBean.setCuerpo(oResultSet.getString("cuerpo"));
-            oPostBean.setFecha(convertToLocalDateViaInstant(oResultSet.getDate("fecha")));
+            oPostBean.setFecha(Helper.convertToLocalDateViaInstant(oResultSet.getDate("fecha")));
             oPostBean.setEtiquetas(oResultSet.getString("etiquetas"));
             oPostBean.setVisible(oResultSet.getBoolean("visible"));
         }
