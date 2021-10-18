@@ -29,12 +29,6 @@ public class HikariPool {
             );
         }
         return oHikariConnection;
-    }
-    
-    @Override
-    public void finalize() throws SQLException{
-        oHikariConnection.closePool();
-        System.out.print("Cerrando pool");
-    }
+    }   
 
 }

@@ -124,7 +124,7 @@ public class PostController extends HttpServlet {
     @Override
     public void destroy() {
         try {
-            oConnectionPool.closePool();
+            oConnectionPool.closeConnection();
         } catch (SQLException ex) {
             System.out.print(ex.getMessage());
         }

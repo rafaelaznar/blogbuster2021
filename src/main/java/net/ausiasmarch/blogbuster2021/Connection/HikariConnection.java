@@ -7,7 +7,7 @@ import com.zaxxer.hikari.HikariDataSource;
 
 public class HikariConnection {
 
-    private HikariDataSource oPool;
+    private HikariDataSource oConnection;
 
     public HikariConnection(
             String connectionChain,
@@ -29,16 +29,16 @@ public class HikariConnection {
         config.setConnectionTestQuery("SELECT 1");
         config.setConnectionTimeout(2000);
 
-        oPool = new HikariDataSource(config);
+        oConnection = new HikariDataSource(config);
     }
 
     public Connection newConnection() throws SQLException {
-        return oPool.getConnection();
+        return oConnection.getConnection();
     }
 
-    public void closePool() throws SQLException {
-        if (oPool != null) {
-            oPool.close();
+    public void closeConnection() throws SQLException {
+        if (oConnection != null) {
+            oConnection.close();
         }
     }
 
