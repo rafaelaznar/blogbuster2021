@@ -6,26 +6,26 @@ import com.google.gson.Gson;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
-import java.util.Properties;
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import net.ausiasmarch.blogbuster2021.Connection.HikariPool;
 import net.ausiasmarch.blogbuster2021.Helper.Helper;
 
 public class SessionController extends HttpServlet {
 
     HikariConnection oConnectionPool = null;
-    Properties oProperties = null;
 
     @Override
     public void init() throws ServletException {
         // https://stackoverflow.com/questions/13638978/java-servlets-overriding-initservletconfig-config
-        ServletContext oServletContext = getServletContext();
-        oConnectionPool = (HikariConnection) oServletContext.getAttribute("pool");
-        oProperties = (Properties) oServletContext.getAttribute("properties");
+        try {
+            oConnectionPool = (HikariConnection) new HikariPool().getDatasource();
+        } catch (ClassNotFoundException | IOException ex) {
+            System.out.print(ex.getMessage());
+        }
     }
 
     @Override
@@ -88,11 +88,12 @@ public class SessionController extends HttpServlet {
     protected void doDelete(HttpServletRequest request, HttpServletResponse response)
            throws ServletException, IOException {
         Helper.doCORS(request, response);
+        Gson oGson = Helper.getGson();
         HttpSession oSession = request.getSession();
         try ( PrintWriter out = response.getWriter()) {
             oSession.invalidate();
             response.setStatus(HttpServletResponse.SC_OK);
-            out.print("Session closed");
+            out.print(oGson.toJson("Session closed"));
         }
     }
 

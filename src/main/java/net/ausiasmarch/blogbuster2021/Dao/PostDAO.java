@@ -54,7 +54,8 @@ public class PostDAO {
         return result;
     }
 
-    public int create(PostBean oPostBean) throws SQLException {
+    public long create(PostBean oPostBean) throws SQLException {
+        long newID = -1L;
         String srtSQL = "INSERT INTO post (titulo,cuerpo,fecha,etiquetas,visible) VALUES (?,?,?,?,?)";
         PreparedStatement oPreparedStatement = oConnection.prepareStatement(srtSQL, PreparedStatement.RETURN_GENERATED_KEYS);
         oPreparedStatement.setString(1, oPostBean.getTitulo());
@@ -65,12 +66,15 @@ public class PostDAO {
         oPreparedStatement.setString(4, oPostBean.getEtiquetas());
         oPreparedStatement.setBoolean(5, oPostBean.getVisible());
         int iResult = oPreparedStatement.executeUpdate();
+        ResultSet rs = oPreparedStatement.getGeneratedKeys();
+        if (rs.next()) {
+            newID = rs.getLong(1);
+        }
         oPreparedStatement.close();
-        return iResult;
+        return newID;
     }
 
-    
-     public int update(PostBean oPostBean) throws SQLException {
+    public int update(PostBean oPostBean) throws SQLException {
         String srtSQL = "UPDATE post SET titulo = ?, cuerpo = ? , fecha = ?, etiquetas = ?, visible = ? WHERE id = ?";
         PreparedStatement oPreparedStatement = oConnection.prepareStatement(srtSQL, PreparedStatement.RETURN_GENERATED_KEYS);
         oPreparedStatement.setString(1, oPostBean.getTitulo());
@@ -85,7 +89,5 @@ public class PostDAO {
         oPreparedStatement.close();
         return iResult;
     }
-    
-     
-    
+
 }
