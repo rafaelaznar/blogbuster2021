@@ -1,4 +1,4 @@
-package net.ausiasmarch.blogbuster2021;
+package net.ausiasmarch.blogbuster2021.Bean;
 
 import java.time.LocalDateTime;
 import java.util.Date;

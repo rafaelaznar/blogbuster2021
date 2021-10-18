@@ -1,4 +1,4 @@
-package net.ausiasmarch.blogbuster2021;
+package net.ausiasmarch.blogbuster2021.Bean;
 
 public class UserBean {
 

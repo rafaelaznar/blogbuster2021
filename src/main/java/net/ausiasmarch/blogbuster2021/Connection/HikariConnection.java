@@ -1,4 +1,4 @@
-package net.ausiasmarch.blogbuster2021;
+package net.ausiasmarch.blogbuster2021.Connection;
 
 import java.sql.Connection;
 import java.sql.SQLException;

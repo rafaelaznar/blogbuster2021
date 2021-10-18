@@ -1,5 +1,6 @@
-package net.ausiasmarch.blogbuster2021;
+package net.ausiasmarch.blogbuster2021.Dao;
 
+import net.ausiasmarch.blogbuster2021.Bean.PostBean;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
