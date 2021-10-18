@@ -477,7 +477,17 @@ public class Control extends HttpServlet {
         doCORS(request, response);
         String ob = request.getParameter("ob");
         String op = request.getParameter("op");
-        Gson oGson = new Gson();
+
+        
+        //https://stackoverflow.com/questions/22310143/java-8-localdatetime-deserialized-using-gson
+        Gson oGson = new GsonBuilder().registerTypeAdapter(LocalDateTime.class, new JsonDeserializer<LocalDateTime>() { 
+            @Override 
+            public LocalDateTime deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException { 
+                return LocalDateTime.parse(json.getAsString(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")); 
+            } 
+        }).create();        
+        
+          HttpSession oSession = request.getSession();
         try ( PrintWriter out = response.getWriter()) {
             if (("".equalsIgnoreCase(ob) && "".equalsIgnoreCase(op)) || (ob == null && op == null)) {
                 response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
@@ -486,7 +496,39 @@ public class Control extends HttpServlet {
                 switch (ob) {
                     case "post":
                         switch (op) {
-                            case "update":
+                            case "update":                                
+                                UserBean oUserBean = (UserBean) oSession.getAttribute("usuario");
+                                String name = null;
+                                if (oUserBean != null) {
+                                    name = oUserBean.getLogin();
+                                    if (name != null) {
+                                        if (name.equalsIgnoreCase("admin")) {
+                                            String payloadRequest = getBody(request);
+                                            PostBean oPostBean = new PostBean();
+                                            try {
+                                                oPostBean = oGson.fromJson(payloadRequest, oPostBean.getClass());
+                                                try (Connection oConnection = oConnectionPool.newConnection()) {
+                                                    PostDAO oPostDao = new PostDAO(oConnection);
+                                                    int iResult = oPostDao.update(oPostBean);
+                                                    response.setStatus(HttpServletResponse.SC_OK);
+                                                    out.print(oGson.toJson(iResult));
+                                                } catch (Exception ex) {
+                                                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                                                    out.print(oGson.toJson(ex.getMessage()));
+                                                }
+                                            } catch (Exception ex){
+                                                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                                                out.print(oGson.toJson(ex.getMessage()));
+                                            }                                           
+                                        }
+                                    } else {
+                                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                        out.print(oGson.toJson("Unauthorized"));
+                                    }
+                                } else {
+                                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                    out.print(oGson.toJson("Unauthorized"));
+                                }                                                                                                
                                 break;
                             default:
                                 response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);

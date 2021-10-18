@@ -68,4 +68,22 @@ public class PostDAO {
         return iResult;
     }
 
+    
+     public int update(PostBean oPostBean) throws SQLException {
+        String srtSQL = "UPDATE post SET titulo = ?, cuerpo = ? , fecha = ?, etiquetas = ?, visible = ? WHERE id = ?";
+        PreparedStatement oPreparedStatement = oConnection.prepareStatement(srtSQL, PreparedStatement.RETURN_GENERATED_KEYS);
+        oPreparedStatement.setString(1, oPostBean.getTitulo());
+        oPreparedStatement.setString(2, oPostBean.getCuerpo());
+        //https://stackoverflow.com/questions/18614836/using-setdate-in-preparedstatement
+        //   "fecha": "2021-01-01 12:23",
+        oPreparedStatement.setTimestamp(3, java.sql.Timestamp.valueOf(oPostBean.getFecha()));
+        oPreparedStatement.setString(4, oPostBean.getEtiquetas());
+        oPreparedStatement.setBoolean(5, oPostBean.getVisible());
+        oPreparedStatement.setInt(6, oPostBean.getId());
+        int iResult = oPreparedStatement.executeUpdate();
+        oPreparedStatement.close();
+        return iResult;
+    }
+    
+    
 }
