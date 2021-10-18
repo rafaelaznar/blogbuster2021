@@ -258,16 +258,15 @@ public class Control extends HttpServlet {
                     case "post":
                          switch (op) {
                             case "getone":
-                                Integer id = Integer.parseInt(request.getParameter("id"));
-                                try ( Connection oConnection = oConnectionPool.newConnection()) {
-                                    PostDAO oPostDao = new PostDAO(oConnection);
-                                    PostBean oPostBean = oPostDao.getOne(id);
+                                PostService oPostService=new PostService(request,oConnectionPool);                                                                
+                                try {                                    
+                                    String result=oPostService.getOne();
                                     response.setStatus(HttpServletResponse.SC_OK);
-                                    out.print(oGson.toJson(oPostBean));
-                                } catch (Exception ex) {
+                                    out.print(result);
+                                } catch (SQLException ex){
                                     response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                                    out.print(oGson.toJson(ex.getMessage()));
-                                }
+                                    out.print(ex.getMessage());
+                                }                                                               
                                 break;
                             case "getpage":
                                 response.setStatus(HttpServletResponse.SC_OK);
@@ -347,39 +346,16 @@ public class Control extends HttpServlet {
                         break;
                     case "post":
                         switch (op) {
-                            case "create":
-                                UserBean oUserBean = (UserBean) oSession.getAttribute("usuario");
-                                String name = null;
-                                if (oUserBean != null) {
-                                    name = oUserBean.getLogin();
-                                    if (name != null) {
-                                        if (name.equalsIgnoreCase("admin")) {
-                                            String payloadRequest = getBody(request);
-                                            PostBean oPostBean = new PostBean();
-                                            try {
-                                                oPostBean = oGson.fromJson(payloadRequest, oPostBean.getClass());
-                                                try (Connection oConnection = oConnectionPool.newConnection()) {
-                                                    PostDAO oPostDao = new PostDAO(oConnection);
-                                                    int iResult = oPostDao.create(oPostBean);
-                                                    response.setStatus(HttpServletResponse.SC_OK);
-                                                    out.print(oGson.toJson(iResult));
-                                                } catch (Exception ex) {
-                                                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                                                    out.print(oGson.toJson(ex.getMessage()));
-                                                }
-                                            } catch (Exception ex){
-                                                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                                                out.print(oGson.toJson(ex.getMessage()));
-                                            }                                           
-                                        }
-                                    } else {
-                                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                                        out.print(oGson.toJson("Unauthorized"));
-                                    }
-                                } else {
-                                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                                    out.print(oGson.toJson("Unauthorized"));
-                                }
+                            case "create":                                
+                                PostService oPostService=new PostService(request, oConnectionPool);                                                                
+                                try {                                    
+                                    String result=oPostService.create();
+                                    response.setStatus(HttpServletResponse.SC_OK);
+                                    out.print(result);
+                                } catch (SQLException ex){
+                                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                                    out.print(ex.getMessage());
+                                }                                                                                                                                                                               
                                 break;
                             default:
                                 response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
