@@ -40,6 +40,7 @@ public class PostController extends HttpServlet {
         Gson oGson = Helper.getGson();
         try ( PrintWriter out = response.getWriter()) {
             if (request.getParameter("id") != null) {
+                //getOne
                 PostService oPostService = new PostService(request, oConnectionPool);
                 try {
                     String result = oPostService.getOne();
@@ -50,7 +51,17 @@ public class PostController extends HttpServlet {
                     out.print(oGson.toJson(ex.getMessage()));
                 }
             } else {
+                //getPage
                 if (request.getParameter("page") != null && request.getParameter("rpp") != null) {
+                    PostService oPostService = new PostService(request, oConnectionPool);
+                    try {
+                        String result = oPostService.getPage();
+                        response.setStatus(HttpServletResponse.SC_OK);
+                        out.print(result);
+                    } catch (SQLException ex) {
+                        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                        out.print(oGson.toJson(ex.getMessage()));
+                    }
                     response.setStatus(HttpServletResponse.SC_OK);
                     out.print(oGson.toJson("post.getpage"));
                 } else {
@@ -95,7 +106,6 @@ public class PostController extends HttpServlet {
                 out.print(oGson.toJson(ex.getMessage()));
             }
         }
-
     }
 
     @Override

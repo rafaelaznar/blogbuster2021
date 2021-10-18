@@ -76,7 +76,7 @@ public class Helper {
             public LocalDateTime deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
                 return LocalDateTime.parse(json.getAsString(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
             }
-        }).create();
+        }).setDateFormat("yyyy-MM-dd HH:mm").create();
     }
 
     public static void opDelay(Integer iLast) {

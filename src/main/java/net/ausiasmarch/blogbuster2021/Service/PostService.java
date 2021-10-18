@@ -8,6 +8,7 @@ import com.google.gson.Gson;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import net.ausiasmarch.blogbuster2021.Helper.Helper;
@@ -26,7 +27,6 @@ public class PostService {
     }
 
     public String getOne() throws SQLException {
-        UserBean oUserBean = null;
         PostBean oPostBean = null;
         Integer id = Integer.parseInt(oRequest.getParameter("id"));
         try ( Connection oConnection = oConnectionPool.newConnection()) {
@@ -36,13 +36,24 @@ public class PostService {
         return oGson.toJson(oPostBean);
     }
 
+    public String getPage() throws SQLException {
+        ArrayList<PostBean> alPostBean = new ArrayList<PostBean>();
+        Integer page = Integer.parseInt(oRequest.getParameter("page"));
+        Integer rpp = Integer.parseInt(oRequest.getParameter("rpp"));
+        try ( Connection oConnection = oConnectionPool.newConnection()) {
+            PostDAO oPostDao = new PostDAO(oConnection);
+            alPostBean = oPostDao.getPage(page, rpp);
+        }
+        return oGson.toJson(alPostBean);
+    }
+
     public String delete() throws SQLException {
         HttpSession oSession = oRequest.getSession();
         UserBean oUserBean = (UserBean) oSession.getAttribute("usuario");
         if (oUserBean != null && oUserBean.getLogin() != null && oUserBean.getLogin().equalsIgnoreCase("admin")) {
             Integer id = Integer.parseInt(oRequest.getParameter("id"));
             try ( Connection oConnection = oConnectionPool.newConnection()) {
-                PostDAO oPostDao = new PostDAO(oConnection);                
+                PostDAO oPostDao = new PostDAO(oConnection);
                 return oGson.toJson(oPostDao.delete(id));
             }
         } else {
@@ -70,7 +81,7 @@ public class PostService {
     public String update() throws SQLException, IOException {
         HttpSession oSession = oRequest.getSession();
         UserBean oUserBean = (UserBean) oSession.getAttribute("usuario");
-        if (oUserBean != null && oUserBean.getLogin() != null && oUserBean.getLogin().equalsIgnoreCase("admin")) {            
+        if (oUserBean != null && oUserBean.getLogin() != null && oUserBean.getLogin().equalsIgnoreCase("admin")) {
             String payloadRequest = Helper.getRequestBody(oRequest);
             PostBean oPostBean = new PostBean();
             oPostBean = oGson.fromJson(payloadRequest, oPostBean.getClass());
@@ -82,10 +93,6 @@ public class PostService {
         } else {
             throw new UnauthorizedException();
         }
-    }
-
-    public String getPage() {
-        return "";
     }
 
 }

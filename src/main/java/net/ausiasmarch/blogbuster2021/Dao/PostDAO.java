@@ -5,9 +5,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
+import java.util.ArrayList;
+import net.ausiasmarch.blogbuster2021.Exception.InternalServerErrorException;
 import net.ausiasmarch.blogbuster2021.Helper.Helper;
 
 public class PostDAO {
@@ -29,7 +28,7 @@ public class PostDAO {
             oPostBean.setId(id);
             oPostBean.setTitulo(oResultSet.getString("titulo"));
             oPostBean.setCuerpo(oResultSet.getString("cuerpo"));
-            oPostBean.setFecha(Helper.convertToLocalDateViaInstant(oResultSet.getDate("fecha")));
+            oPostBean.setFecha(oResultSet.getTimestamp("fecha").toLocalDateTime());
             oPostBean.setEtiquetas(oResultSet.getString("etiquetas"));
             oPostBean.setVisible(oResultSet.getBoolean("visible"));
         }
@@ -81,6 +80,33 @@ public class PostDAO {
         int iResult = oPreparedStatement.executeUpdate();
         oPreparedStatement.close();
         return iResult;
+    }
+
+    public ArrayList<PostBean> getPage(int page, int rpp) throws SQLException {
+        PreparedStatement oPreparedStatement;
+        ResultSet oResultSet;
+        int offset;
+        if (page > 0) {
+            offset = (rpp * page) - rpp;
+        } else {
+            throw new InternalServerErrorException("Página incorrecta");
+        }
+        oPreparedStatement = oConnection.prepareStatement("SELECT * FROM post LIMIT ? OFFSET ?");
+        oPreparedStatement.setInt(1, rpp);
+        oPreparedStatement.setInt(2, offset);
+        oResultSet = oPreparedStatement.executeQuery();
+        ArrayList<PostBean> oPostBeanList = new ArrayList<>();
+        while (oResultSet.next()) {
+            PostBean oPostBean = new PostBean();
+            oPostBean.setId(oResultSet.getInt("id"));
+            oPostBean.setTitulo(oResultSet.getString("titulo"));
+            oPostBean.setCuerpo(oResultSet.getString("cuerpo"));            
+            oPostBean.setFecha(oResultSet.getTimestamp("fecha").toLocalDateTime());
+            oPostBean.setEtiquetas(oResultSet.getString("etiquetas"));
+            oPostBean.setVisible(oResultSet.getBoolean("visible"));
+            oPostBeanList.add(oPostBean);
+        }
+        return oPostBeanList;
     }
 
 }
