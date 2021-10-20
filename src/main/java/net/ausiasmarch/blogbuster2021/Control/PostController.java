@@ -20,11 +20,7 @@ public class PostController extends HttpServlet {
     @Override
     public void init() throws ServletException {
         // https://stackoverflow.com/questions/13638978/java-servlets-overriding-initservletconfig-config
-        try {
-            oConnectionPool = (HikariConnection) new HikariPool().getHikariPool();
-        } catch (ClassNotFoundException | IOException ex) {
-            System.out.print(ex.getMessage());
-        }
+        oConnectionPool =  HikariPool.getHikariPool();
     }
 
     @Override

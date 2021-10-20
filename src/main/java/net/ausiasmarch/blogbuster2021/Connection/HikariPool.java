@@ -6,15 +6,15 @@ import net.ausiasmarch.blogbuster2021.Helper.Helper;
 
 public class HikariPool {
 
-    private HikariConnection oHikariConnection = null;
-    Properties oProperties = null;
+    private static HikariConnection oHikariConnection = null;
+    private static Properties oProperties = null;
 
     public HikariPool() throws ClassNotFoundException, IOException {
         Class.forName("com.mysql.jdbc.Driver");
         oProperties = Helper.loadResourceProperties();
     }
 
-    public HikariConnection getHikariPool() {
+    public static HikariConnection getHikariPool() {
         if (oHikariConnection == null) {
             System.out.print("Abriendo pool");
             oHikariConnection = new HikariConnection(
