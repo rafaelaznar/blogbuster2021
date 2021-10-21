@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import net.ausiasmarch.blogbuster2021.Bean.GetPagePostBean;
 import net.ausiasmarch.blogbuster2021.Helper.Helper;
 import net.ausiasmarch.blogbuster2021.Exception.UnauthorizedException;
 
@@ -40,11 +41,16 @@ public class PostService {
         ArrayList<PostBean> alPostBean = new ArrayList<PostBean>();
         Integer page = Integer.parseInt(oRequest.getParameter("page"));
         Integer rpp = Integer.parseInt(oRequest.getParameter("rpp"));
+        GetPagePostBean oGetPagePostBean = null;
         try ( Connection oConnection = oConnectionPool.newConnection()) {
             PostDAO oPostDao = new PostDAO(oConnection);
             alPostBean = oPostDao.getPage(page, rpp);
+            oGetPagePostBean = new GetPagePostBean();
+            oGetPagePostBean.setContent(alPostBean);
+            oGetPagePostBean.setTotalElements(oPostDao.getCount());
+            oGetPagePostBean.setTotalPages((int) Math.ceil(oGetPagePostBean.getTotalElements() / rpp));
         }
-        return oGson.toJson(alPostBean);
+        return oGson.toJson(oGetPagePostBean);
     }
 
     public String delete() throws SQLException {

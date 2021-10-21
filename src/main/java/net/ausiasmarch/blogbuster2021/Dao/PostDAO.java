@@ -86,7 +86,7 @@ public class PostDAO {
         PreparedStatement oPreparedStatement;
         ResultSet oResultSet;
         int offset;
-        if (page > 0) {
+        if (page > 0 && rpp > 0) {
             offset = (rpp * page) - rpp;
         } else {
             throw new InternalServerErrorException("Página incorrecta");
@@ -107,6 +107,18 @@ public class PostDAO {
             oPostBeanList.add(oPostBean);
         }
         return oPostBeanList;
+    }
+    
+    public int getCount() throws SQLException{
+        PreparedStatement oPreparedStatement;
+        ResultSet oResultSet;
+        oPreparedStatement = oConnection.prepareStatement("SELECT count(*) FROM post");
+        oResultSet = oPreparedStatement.executeQuery();
+        if (oResultSet.next()) {
+            return oResultSet.getInt(1);
+        } else {
+            throw new InternalServerErrorException("Error en getCount");
+        }        
     }
 
 }
