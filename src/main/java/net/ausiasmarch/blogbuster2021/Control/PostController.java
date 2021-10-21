@@ -64,8 +64,6 @@ public class PostController extends HttpServlet {
                         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                         out.print(oGson.toJson(ex.getMessage()));
                     }
-                    response.setStatus(HttpServletResponse.SC_OK);
-                    out.print(oGson.toJson("post.getpage"));
                 } else {
                     response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
                     out.print(oGson.toJson("Method Not Allowed"));
