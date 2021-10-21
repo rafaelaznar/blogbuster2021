@@ -48,7 +48,12 @@ public class PostService {
             oGetPagePostBean = new GetPagePostBean();
             oGetPagePostBean.setContent(alPostBean);
             oGetPagePostBean.setTotalElements(oPostDao.getCount());
-            oGetPagePostBean.setTotalPages((int) Math.ceil(oGetPagePostBean.getTotalElements() / rpp));
+//            if (oGetPagePostBean.getTotalElements() % rpp != 0) {
+//                oGetPagePostBean.setTotalPages((oGetPagePostBean.getTotalElements() / rpp) + 1);
+//            } else {
+//                oGetPagePostBean.setTotalPages(oGetPagePostBean.getTotalElements() / rpp);
+//            }
+            oGetPagePostBean.setTotalPages((int) Math.ceil(((double) oGetPagePostBean.getTotalElements()) / rpp));
         }
         return oGson.toJson(oGetPagePostBean);
     }
