@@ -9,14 +9,10 @@ public class HikariPool {
     private static HikariConnection oHikariConnection = null;
     private static Properties oProperties = null;
 
-    public HikariPool() throws ClassNotFoundException, IOException {
-        Class.forName("com.mysql.jdbc.Driver");
-        oProperties = Helper.loadResourceProperties();
-    }
-
-    public static HikariConnection getHikariPool() {
+    public static HikariConnection getHikariPool() throws ClassNotFoundException, IOException {
         if (oHikariConnection == null) {
-            System.out.print("Abriendo pool");
+            Class.forName("com.mysql.jdbc.Driver");
+            oProperties = Helper.loadResourceProperties();            
             oHikariConnection = new HikariConnection(
                    Helper.getConnectionChain(oProperties.getProperty("database.host"),
                           oProperties.getProperty("database.port"),

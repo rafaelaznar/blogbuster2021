@@ -20,18 +20,24 @@ public class PostController extends HttpServlet {
     @Override
     public void init() throws ServletException {
         // https://stackoverflow.com/questions/13638978/java-servlets-overriding-initservletconfig-config
-        oConnectionPool =  HikariPool.getHikariPool();
+        try {
+            oConnectionPool = HikariPool.getHikariPool();
+        } catch (ClassNotFoundException ex) {
+            System.out.println("Error en la creación del Pool: falta driver JDBC");
+        } catch (IOException ex) {
+            System.out.println("Error en la creación del Pool: fichero de recursos no accesible");
+        }
     }
 
     @Override
     protected void doOptions(HttpServletRequest request, HttpServletResponse response)
-           throws ServletException, IOException {
+            throws ServletException, IOException {
         Helper.doCORS(request, response);
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-           throws ServletException, IOException {
+            throws ServletException, IOException {
         Helper.doCORS(request, response);
         Gson oGson = Helper.getGson();
         try ( PrintWriter out = response.getWriter()) {
@@ -71,7 +77,7 @@ public class PostController extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
-           throws ServletException, IOException {
+            throws ServletException, IOException {
         Helper.doCORS(request, response);
         Gson oGson = Helper.getGson();
         try ( PrintWriter out = response.getWriter()) {
@@ -89,7 +95,7 @@ public class PostController extends HttpServlet {
 
     @Override
     protected void doDelete(HttpServletRequest request, HttpServletResponse response)
-           throws ServletException, IOException {
+            throws ServletException, IOException {
         Gson oGson = Helper.getGson();
         try ( PrintWriter out = response.getWriter()) {
             try {
@@ -106,7 +112,7 @@ public class PostController extends HttpServlet {
 
     @Override
     protected void doPut(HttpServletRequest request, HttpServletResponse response)
-           throws ServletException, IOException {
+            throws ServletException, IOException {
         Helper.doCORS(request, response);
         Gson oGson = Helper.getGson();
         try ( PrintWriter out = response.getWriter()) {

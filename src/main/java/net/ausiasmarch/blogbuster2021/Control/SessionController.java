@@ -6,6 +6,8 @@ import com.google.gson.Gson;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -20,23 +22,25 @@ public class SessionController extends HttpServlet {
 
     @Override
     public void init() throws ServletException {
-        // https://stackoverflow.com/questions/13638978/java-servlets-overriding-initservletconfig-config
         try {
-            oConnectionPool = (HikariConnection) new HikariPool().getHikariPool();
-        } catch (ClassNotFoundException | IOException ex) {
-            System.out.print(ex.getMessage());
+            // https://stackoverflow.com/questions/13638978/java-servlets-overriding-initservletconfig-config
+            oConnectionPool = HikariPool.getHikariPool();
+        } catch (ClassNotFoundException ex) {
+            System.out.println("Error en la creación del Pool: falta driver JDBC");
+        } catch (IOException ex) {
+            System.out.println("Error en la creación del Pool: fichero de recursos no accesible");
         }
     }
 
     @Override
     protected void doOptions(HttpServletRequest request, HttpServletResponse response)
-           throws ServletException, IOException {
+            throws ServletException, IOException {
         Helper.doCORS(request, response);
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-           throws ServletException, IOException {
+            throws ServletException, IOException {
         Helper.doCORS(request, response);
         Gson oGson = new Gson();
         try ( PrintWriter out = response.getWriter()) {
@@ -54,7 +58,7 @@ public class SessionController extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
-           throws ServletException, IOException {
+            throws ServletException, IOException {
         Helper.doCORS(request, response);
         HttpSession oSession = request.getSession();
         String payloadRequest = Helper.getRequestBody(request);
@@ -86,7 +90,7 @@ public class SessionController extends HttpServlet {
 
     @Override
     protected void doDelete(HttpServletRequest request, HttpServletResponse response)
-           throws ServletException, IOException {
+            throws ServletException, IOException {
         Helper.doCORS(request, response);
         Gson oGson = Helper.getGson();
         HttpSession oSession = request.getSession();
