@@ -22,6 +22,24 @@ import javax.servlet.http.HttpServletResponse;
 
 public class Helper {
 
+    public static boolean isIntegerParsable(String input) {
+        try {
+            Integer.parseInt(input);
+            return true;
+        } catch (final NumberFormatException e) {
+            return false;
+        }
+    }
+
+    public static boolean contains(String[] arr, String targetValue) {
+        for (String s : arr) {
+            if (s.equalsIgnoreCase(targetValue)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static LocalDateTime convertToLocalDateViaInstant(Date dateToConvert) {
         return dateToConvert.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
     }

@@ -41,13 +41,21 @@ public class PostService {
         ArrayList<PostBean> alPostBean = new ArrayList<PostBean>();
         Integer page = Integer.parseInt(oRequest.getParameter("page"));
         Integer rpp = Integer.parseInt(oRequest.getParameter("rpp"));
+        String order = oRequest.getParameter("order");
+        String direction = oRequest.getParameter("dir");
+        String filter = oRequest.getParameter("filter");
         GetPagePostBean oGetPagePostBean = null;
         try ( Connection oConnection = oConnectionPool.newConnection()) {
             PostDAO oPostDao = new PostDAO(oConnection);
-            alPostBean = oPostDao.getPage(page, rpp);
+            alPostBean = oPostDao.getPage(page, rpp, order, direction, filter);
             oGetPagePostBean = new GetPagePostBean();
             oGetPagePostBean.setContent(alPostBean);
-            oGetPagePostBean.setTotalElements(oPostDao.getCount());
+            oGetPagePostBean.setTotalElements(oPostDao.getCount(""));
+            if (filter != null && filter.length() > 0) {
+                oGetPagePostBean.setTotalFilteredElements(oPostDao.getCount(filter));
+            } else {
+                oGetPagePostBean.setTotalFilteredElements(oGetPagePostBean.getTotalElements());
+            }
 //            if (oGetPagePostBean.getTotalElements() % rpp != 0) {
 //                oGetPagePostBean.setTotalPages((oGetPagePostBean.getTotalElements() / rpp) + 1);
 //            } else {

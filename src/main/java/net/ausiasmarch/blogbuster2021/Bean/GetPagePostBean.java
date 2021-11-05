@@ -7,6 +7,7 @@ public class GetPagePostBean {
     private ArrayList<PostBean> content = null;
     private int totalElements = 0;
     private int totalPages = 0;
+    private int totalFilteredElements = 0;
 
     public GetPagePostBean() {        
     }
@@ -33,6 +34,14 @@ public class GetPagePostBean {
 
     public void setTotalPages(int totalPages) {
         this.totalPages = totalPages;
+    }
+
+    public int getTotalFilteredElements() {
+        return totalFilteredElements;
+    }
+
+    public void setTotalFilteredElements(int totalFilteredElements) {
+        this.totalFilteredElements = totalFilteredElements;
     }
 
 }

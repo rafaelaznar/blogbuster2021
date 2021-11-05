@@ -82,25 +82,58 @@ public class PostDAO {
         return iResult;
     }
 
-    public ArrayList<PostBean> getPage(int page, int rpp) throws SQLException {
+    public ArrayList<PostBean> getPage(int page, int rpp, String order, String direction, String filter) throws SQLException {
+        String[] campos = new String[]{"id", "titulo", "cuerpo", "fecha", "etiquetas", "visible"};
         PreparedStatement oPreparedStatement;
         ResultSet oResultSet;
+        String strSQL = "SELECT * FROM post";
+        String strSQLOrder = "";
         int offset;
         if (page > 0 && rpp > 0) {
             offset = (rpp * page) - rpp;
         } else {
             throw new InternalServerErrorException("Página incorrecta");
         }
-        oPreparedStatement = oConnection.prepareStatement("SELECT * FROM post LIMIT ? OFFSET ?");
-        oPreparedStatement.setInt(1, rpp);
-        oPreparedStatement.setInt(2, offset);
+        if (filter != null && filter.length() > 0) {
+            if (Helper.isIntegerParsable(filter)) {
+                strSQL += " WHERE id = ? ";
+            } else {
+                strSQL += " WHERE titulo LIKE ? OR cuerpo LIKE ? OR etiquetas LIKE ? ";
+            }
+        }
+        if (order != null && order.length() > 0 && Helper.contains(campos, order)) {
+            strSQL += " ORDER BY " + order;
+            if (direction != null && direction.length() > 0 && direction.equalsIgnoreCase("asc")) {
+                strSQL += " ASC";
+            } else {
+                strSQL += " DESC";
+            }
+        }
+        strSQL += " LIMIT ? OFFSET ?";
+        oPreparedStatement = oConnection.prepareStatement(strSQL);
+        if (filter != null && filter.length() > 0) {
+            if (Helper.isIntegerParsable(filter)) {
+                oPreparedStatement.setInt(1, Integer.parseInt(filter));
+                oPreparedStatement.setInt(2, rpp);
+                oPreparedStatement.setInt(3, offset);
+            } else {
+                oPreparedStatement.setString(1, "%" + filter + "%");
+                oPreparedStatement.setString(2, "%" + filter + "%");
+                oPreparedStatement.setString(3, "%" + filter + "%");
+                oPreparedStatement.setInt(4, rpp);
+                oPreparedStatement.setInt(5, offset);
+            }
+        } else {
+            oPreparedStatement.setInt(1, rpp);
+            oPreparedStatement.setInt(2, offset);
+        }
         oResultSet = oPreparedStatement.executeQuery();
         ArrayList<PostBean> oPostBeanList = new ArrayList<>();
         while (oResultSet.next()) {
             PostBean oPostBean = new PostBean();
             oPostBean.setId(oResultSet.getInt("id"));
             oPostBean.setTitulo(oResultSet.getString("titulo"));
-            oPostBean.setCuerpo(oResultSet.getString("cuerpo"));            
+            oPostBean.setCuerpo(oResultSet.getString("cuerpo"));
             oPostBean.setFecha(oResultSet.getTimestamp("fecha").toLocalDateTime());
             oPostBean.setEtiquetas(oResultSet.getString("etiquetas"));
             oPostBean.setVisible(oResultSet.getBoolean("visible"));
@@ -108,17 +141,34 @@ public class PostDAO {
         }
         return oPostBeanList;
     }
-    
-    public int getCount() throws SQLException{
+
+    public int getCount(String filter) throws SQLException {
         PreparedStatement oPreparedStatement;
         ResultSet oResultSet;
-        oPreparedStatement = oConnection.prepareStatement("SELECT count(*) FROM post");
+        String strSQL = "SELECT count(*) FROM post";
+        if (filter != null && filter.length() > 0) {
+            if (Helper.isIntegerParsable(filter)) {
+                strSQL += " WHERE id = ? ";
+            } else {
+                strSQL += " WHERE titulo LIKE ? OR cuerpo LIKE ? OR etiquetas LIKE ? ";
+            }
+        }
+        oPreparedStatement = oConnection.prepareStatement(strSQL);
+        if (filter != null && filter.length() > 0) {
+            if (Helper.isIntegerParsable(filter)) {
+                oPreparedStatement.setInt(1, Integer.parseInt(filter));
+            } else {
+                oPreparedStatement.setString(1, "%" + filter + "%");
+                oPreparedStatement.setString(2, "%" + filter + "%");
+                oPreparedStatement.setString(3, "%" + filter + "%");
+            }
+        }
         oResultSet = oPreparedStatement.executeQuery();
         if (oResultSet.next()) {
             return oResultSet.getInt(1);
         } else {
             throw new InternalServerErrorException("Error en getCount");
-        }        
+        }
     }
 
 }
